@@ -1,11 +1,14 @@
 
+/**
+  * To save the CSV file, uncomment the lines between [SAVE-CSV-BLOCK-START] and [SAVE-CSV-BLOCK-END]
+  * CSV file name would be (base file name)_events.csv (for Events) and (base file name)_notes.csv (for Notes)
+  */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using UnityEngine;
 
 namespace MidiAnalyser
 {
@@ -19,25 +22,27 @@ namespace MidiAnalyser
         public static List<Note> note { get; private set; } = new List<Note>();
         public static List<Event> ev { get; private set; } = new List<Event>();
         static List<byte>[] track;
-        //static string FileName;
+        static string FileName;
 
         public static void Main(string FileName)
         {
             Reset();
+            MidiAnalyzerCore.FileName = FileName;
             System.IO.FileInfo file = new System.IO.FileInfo(FileName);
             data = new byte[file.Length];
             System.IO.FileStream fs = file.Open(System.IO.FileMode.Open);
             fs.Read(data, 0, (int)file.Length);
             fs.Close();
-            Debug.Log("Finished reading");
+            Console.WriteLine("Finished reading");
             if (checkHeader())
             {
-                Debug.Log("Finished loading. Converting the file...");
-                Debug.Log("Finished Converting into events. Result code:" + readData());
-                Debug.Log("Finished Converting into notes. Result code:" + getNotes());
-                //★ファイルの吐き出しを止めるには以下2行をコメントアウト
-                //Debug.Log("Finished Creating event data. Result code:" + saveEventData());
-                //Debug.Log("Finished Creating note data. Result code:" + saveNoteData());
+                Console.WriteLine("Finished loading. Converting the file...");
+                Console.WriteLine("Finished Converting into events. Result code:" + readData());
+                Console.WriteLine("Finished Converting into notes. Result code:" + getNotes());
+                //[SAVE-CSV-BLOCK-START]
+                //Console.WriteLine("Finished Creating event data. Result code:" + saveEventData());
+                //Console.WriteLine("Finished Creating note data. Result code:" + saveNoteData());
+                //[SAVE-CSV-BLOCK-END]
             }
             else
             {
@@ -74,9 +79,9 @@ namespace MidiAnalyser
         {
             track_cnt = (int)DataExtractor.getDataRange(data, 10, 2);
             track = new List<byte>[track_cnt];
-            Debug.Log("There are " + track_cnt + " track(s).");
+            Console.WriteLine("There are " + track_cnt + " track(s).");
             time_format = (int)DataExtractor.getDataRange(data, 12, 2);
-            Debug.Log("Time format: " + time_format);
+            Console.WriteLine("Time format: " + time_format);
             //トラック情報を配列にダンプする
             long n = 14;
             for (int i = 0; i < track_cnt; i++)
@@ -209,7 +214,7 @@ namespace MidiAnalyser
                     else
                     {
                         recent_note_on[ch][note_no] = i;
-                        Debug.Log("Bad note-on detected.");
+                        Console.WriteLine("Bad note-on detected.");
                     }
                 }
                 else if (ev[i].type == Event.EVENT_TYPE_NOTE_OFF)
@@ -226,7 +231,7 @@ namespace MidiAnalyser
                     else
                     {
                         recent_note_off[ch][note_no] = i;
-                        Debug.Log("Bad note-off detected.");
+                        Console.WriteLine("Bad note-off detected.");
                     }
                 }
             }
@@ -253,13 +258,13 @@ namespace MidiAnalyser
             return output;
         }
 
-        /*static int saveEventData()
+        static int saveEventData()
         {
             System.IO.FileStream file = new System.IO.FileStream(FileName + "_events.csv", System.IO.FileMode.Create);
             byte[] data = Encoding.ASCII.GetBytes(createEventData());
             file.Write(data, 0, data.Length);
             return 0;
-        }*/
+        }
 
         static string createNoteData()
         {
@@ -284,13 +289,13 @@ namespace MidiAnalyser
             return output;
         }
 
-        /*static int saveNoteData()
+        static int saveNoteData()
         {
             System.IO.FileStream file = new System.IO.FileStream(FileName + "_notes.csv", System.IO.FileMode.Create);
             byte[] data = Encoding.ASCII.GetBytes(createNoteData());
             file.Write(data, 0, data.Length);
             return 0;
-        }*/
+        }
     }
 
     public class Event
@@ -314,7 +319,7 @@ namespace MidiAnalyser
 
         public Event(short type, long pos, List<byte> ex, int track)
         {
-            if (type < EVENT_TYPE_SYSEX_0) { Debug.Log("Error occurred when adding an event: this event type requires channel data."); }
+            if (type < EVENT_TYPE_SYSEX_0) { Console.WriteLine("Error occurred when adding an event: this event type requires channel data."); }
             this.type = type;
             this.pos = pos;
             this.ex = ex;
